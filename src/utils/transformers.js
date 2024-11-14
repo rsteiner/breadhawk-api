@@ -119,10 +119,41 @@ const transformOrganizer = (o) => ({
     }
 });
 
+const transformEvent = (e) => ({
+    id: e.EventID,
+    name: e.Name || e.MarketName,
+    dates: {
+        start: e.DateStart,
+        end: e.DateEnd
+    },
+    space: {
+        size: e.Size || e.MarketSize,
+        capacity: e.Capacity || e.MarketCapacity,
+        indoorOutdoor: e.IndoorOutdoor || e.MarketIndoorOutdoor
+    },
+    venue: (e.VenueID || e.MarketVenueID) ? transformVenue({
+        ...e,
+        VenueID: e.VenueID || e.MarketVenueID
+    }) : null,
+    organizer: (e.OrganizerID || e.MarketOrganizerID) ? transformOrganizer({
+        ...e,
+        OrganizerID: e.OrganizerID || e.MarketOrganizerID
+    }) : null,
+    market: {
+        id: e.MarketID,
+        name: e.MarketName
+    },
+    timestamps: {
+        created: e.CreatedAt,
+        updated: e.UpdatedAt
+    }
+});
+
 module.exports = {
     transformVendor,
     transformMarket,
     transformVenue,
-    transformOrganizer
+    transformOrganizer,
+    transformEvent
 };
 

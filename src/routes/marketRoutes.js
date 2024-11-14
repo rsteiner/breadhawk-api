@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const asyncHandler = require('../utils/asyncHandler');
 const db = require('../config/database');
+const { transformMarket, transformEvent } = require('../utils/transformers');
 
 // GET all markets with enhanced filtering and stats
 router.get('/', asyncHandler(async (req, res) => {
@@ -220,6 +221,39 @@ router.get('/:id/vendors', asyncHandler(async (req, res) => {
     res.json({
         status: 'success',
         data: rows
+    });
+}));
+
+// GET all events for a market
+router.get('/:id/events', asyncHandler(async (req, res) => {
+    const { upcoming } = req.query;
+    
+    let query = `
+        SELECT 
+            e.*,
+            m.Name as MarketName,
+            m.Size as MarketSize,
+            m.Capacity as MarketCapacity,
+            m.IndoorOutdoor as MarketIndoorOutdoor,
+            m.VenueID as MarketVenueID,
+            m.OrganizerID as MarketOrganizerID
+        FROM Event e
+        JOIN Market m ON e.MarketID = m.MarketID
+        WHERE e.MarketID = ?`;
+
+    const params = [req.params.id];
+
+    if (upcoming === 'true') {
+        query += ` AND e.DateStart >= CURRENT_TIMESTAMP()`;
+    }
+
+    query += ` ORDER BY e.DateStart ASC`;
+
+    const [events] = await db.query(query, params);
+
+    res.json({
+        status: 'success',
+        data: events.map(transformEvent)
     });
 }));
 
